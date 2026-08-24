@@ -27,6 +27,14 @@
 - Real membership-derived traveler sidebar including the authenticated traveler
 - UTC event persistence converted through the trip timezone for date-driven navigation
 - Stable traveler colors, aligned full-day Week layout, client/database time validation, and per-day overlap columns
+- Admin-only permanent trip deletion with database-enforced cascade behavior and typed danger-zone confirmation
+- Authenticated self-account deletion through a JWT-verified Supabase Edge Function, including sole-admin protection and master-event reassignment
+- Labeled IANA timezone selectors for trip creation and settings, preserving raw timezone IDs
+- Secure member leave and admin promotion RPCs in migration `20260819000008_membership_management.sql`, with settings actions and refreshed trip/dashboard state
+- Clipboard-only invite-code sharing with graceful manual-code fallback
+- Stable user-ID-based traveler color utilities with a reserved master itinerary color/tint across calendar, avatars, and member chips
+- Collapsible desktop sidebar with mobile drawer/overlay behavior and cleaned-up profile dropdown dismissal
+- Private trip banner image upload, replacement, removal, signed-URL display, and admin/member settings behavior
 
 ## Remaining
 
@@ -46,7 +54,8 @@
 - Invite-only invitations are created/updated by the event owner; invited members can accept by changing their participant status to joined.
 - Existing Auth users created before the profile trigger was installed require the profile backfill migration.
 - Cross-midnight events are rendered as safe day segments in the week view; editing still uses the existing single-date event form.
+- Trip banner URLs are signed for one hour and refreshed whenever trips are loaded; the private `trip-images` bucket and migration policies must be deployed before uploads work.
 
 ## Next recommended task
 
-Validate the full auth/RLS workflow with multiple test accounts. Apply `supabase/migrations/20260819000005_event_visibility_reads.sql` after the prior migrations.
+Validate the full auth/RLS workflow with multiple test accounts. Apply migrations through `20260819000010_trip_banner_crop.sql`, deploy the local `delete-account` Edge Function, and verify Storage policies with an admin and a member account. The configured project currently returns `404 NOT_FOUND` for `/functions/v1/delete-account`, so account deletion remains deployment-blocked until the function is deployed.

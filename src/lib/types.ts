@@ -10,6 +10,10 @@ export type TripRow = {
   timezone: string
   description: string | null
   invite_code: string
+  banner_image_path?: string | null
+  banner_image_url?: string | null
+  banner_position_x?: number | null
+  banner_position_y?: number | null
 }
 
 export type MemberRow = {
@@ -23,7 +27,7 @@ export type MemberRow = {
 export type EventRow = {
   id: string
   trip_id: string
-  owner_id: string
+  owner_id: string | null
   type: 'master' | 'personal'
   title: string
   description: string | null

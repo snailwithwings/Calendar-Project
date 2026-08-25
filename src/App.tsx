@@ -348,6 +348,14 @@ function App() {
     media.addEventListener('change', syncSidebarMode)
     return () => media.removeEventListener('change', syncSidebarMode)
   }, [])
+  useEffect(() => {
+    if (!showSidebar) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowSidebar(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [showSidebar])
 
   const notify = (message: string) => {
     setToast(message)
@@ -716,7 +724,8 @@ function App() {
   const monthDates = Array.from({ length: 42 }, (_, index) => addDays(monthGridStart, index))
   const visibleEvents = events.filter((event) => {
     if (event.kind === 'master') return visible.master
-    return event.owner ? visible[event.owner] ?? false : false
+    if (event.owner && visible[event.owner]) return true
+    return event.participants.includes(userId) && visible[userId] !== false
   })
   const currentMember = members.find((member) => member.id === userId)
   const canManageMaster = currentMember?.role === 'admin' || !isSupabaseConfigured
@@ -928,7 +937,7 @@ function CalendarGrid({ events, members, dates, currentUserId, tripNow, onSelect
       {event.kind !== 'master' && event.participants.length > 1 && <span className="attendee-count"><Users size={11} /> {event.participants.length}</span>}
     </button>
   }
-  return <div className="calendar"><div className="calendar-scroll"><div className="calendar-grid-content"><div className="calendar-head"><div className="time-gutter" />{dates.map((date) => <div className={`day-head ${date === tripNow.date ? 'today' : date < tripNow.date ? 'past-day' : ''}`} key={date}><span>{weekdayLabel(date).split(' ')[0]}</span><b>{date.slice(8, 10)}</b></div>)}</div><div className="all-day-row"><div className="all-day-label">ALL DAY</div>{dates.map((date) => <div className={`all-day-column ${date < tripNow.date ? 'past-day' : ''}`} key={date}>{allDayEvents.filter((event) => date >= event.date && date <= (event.endDate && event.endDate >= event.date ? event.endDate : event.date)).map((event) => { const colors = getDisplayColors(event.owner || '', event.kind === 'master'); return <button key={event.id} className={`all-day-event ${event.kind} ${isEventPast(event, tripNow) ? 'past-event' : ''}`} style={{ '--event-color': colors.strong, '--event-tint': colors.tint } as React.CSSProperties} onClick={() => onSelect(event)}>{event.title}</button> })}</div>)}</div><div className="calendar-body" ref={scrollRef}><div className="calendar-body-inner"><div className="time-column">{hours.map((hour) => <span key={hour}>{timeLabel(hour)}</span>)}</div><div className="day-columns">{dates.map((date) => <div className={`day-column ${date < tripNow.date ? 'past-day' : ''} ${date === tripNow.date ? 'today-column' : ''}`} key={date}>{hours.slice(0, -1).map((hour) => <div className="hour-line" key={hour} />)}{date === tripNow.date && <div className="current-time-marker" style={{ top: `${tripNow.minutes / 60 * hourHeight}px` }}><span>{formatTime(tripNow.time)}</span></div>}{layoutDayEvents(timedEvents, date).map(({ event, segment, column, columns }) => eventButton(event, segment, `${event.id}-${date}`, column, columns))}</div>)}</div></div></div></div></div></div>
+  return <div className="calendar"><div className="calendar-scroll"><div className="calendar-grid-content"><div className="calendar-vertical-scroll" ref={scrollRef}><div className="calendar-head"><div className="time-gutter" />{dates.map((date) => <div className={`day-head ${date === tripNow.date ? 'today' : date < tripNow.date ? 'past-day' : ''}`} key={date}><span>{weekdayLabel(date).split(' ')[0]}</span><b>{date.slice(8, 10)}</b></div>)}</div><div className="all-day-row"><div className="all-day-label">ALL DAY</div>{dates.map((date) => <div className={`all-day-column ${date < tripNow.date ? 'past-day' : ''}`} key={date}>{allDayEvents.filter((event) => date >= event.date && date <= (event.endDate && event.endDate >= event.date ? event.endDate : event.date)).map((event) => { const colors = getDisplayColors(event.owner || '', event.kind === 'master'); return <button key={event.id} className={`all-day-event ${event.kind} ${isEventPast(event, tripNow) ? 'past-event' : ''}`} style={{ '--event-color': colors.strong, '--event-tint': colors.tint } as React.CSSProperties} onClick={() => onSelect(event)}>{event.title}</button> })}</div>)}</div><div className="calendar-body"><div className="calendar-body-inner"><div className="time-column">{hours.map((hour) => <span key={hour}>{timeLabel(hour)}</span>)}</div><div className="day-columns">{dates.map((date) => <div className={`day-column ${date < tripNow.date ? 'past-day' : ''} ${date === tripNow.date ? 'today-column' : ''}`} key={date}>{hours.slice(0, -1).map((hour) => <div className="hour-line" key={hour} />)}{date === tripNow.date && <div className="current-time-marker" style={{ top: `${tripNow.minutes / 60 * hourHeight}px` }}><span>{formatTime(tripNow.time)}</span></div>}{layoutDayEvents(timedEvents, date).map(({ event, segment, column, columns }) => eventButton(event, segment, `${event.id}-${date}`, column, columns))}</div>)}</div></div></div></div></div></div></div>
 }
 
 function MonthGrid({ events, members, dates, tripNow, onSelect }: { events: EventItem[]; members: Member[]; dates: string[]; tripNow: TripNow; onSelect: (event: EventItem) => void }) {
